@@ -20,6 +20,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // Hidden container for pure measurement
     const container = document.createElement('div');
     container.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;';
     container.style.width = `${part.width}px`;
@@ -30,6 +31,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
     const calibrate = () => {
       const svg = container.querySelector('svg');
       if (!svg) return;
+
       const guides: any[] = [];
       const svgRect = svg.getBoundingClientRect();
       const viewBox = svg.viewBox.baseVal;
@@ -39,11 +41,15 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
       const vbY = viewBox.y || 0;
 
       part.connectors.forEach(conn => {
-        const el = (svg.getElementById(conn.svgId) || svg.querySelector(`[id$="${conn.svgId}"]`)) as any;
+        const targetId = conn.legId || conn.svgId;
+        const el = (svg.getElementById(targetId) || svg.querySelector(`[id$="${targetId}"]`)) as any;
+        
         if (el) {
           const rect = el.getBoundingClientRect();
+          // Relative position inside the SVG box
           const pxX = rect.left + rect.width / 2 - svgRect.left;
           const pxY = rect.top + rect.height / 2 - svgRect.top;
+          
           const vx = (pxX / svgRect.width) * vbW + vbX;
           const vy = (pxY / svgRect.height) * vbH + vbY;
           guides.push({ id: conn.id, x: vx, y: vy, pxX, pxY });
@@ -90,11 +96,13 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
         >
           {!isDeleteMode && <div className="rotate-indicator">↻</div>}
           <div dangerouslySetInnerHTML={{ __html: part.svgContent }} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
+          
           <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible', zIndex: 25 }} viewBox={part.viewBox}>
             {pinGuides.map(g => (
               <circle key={g.id} cx={g.x} cy={g.y} r={Math.max(part.width, part.height) / 150} fill="#FF3D00" stroke="white" strokeWidth={Math.max(part.width, part.height) / 600} opacity={0.8} />
             ))}
           </svg>
+
           {showLabel && (
             <div style={{ fontSize: '10px', textAlign: 'center', background: 'rgba(255,255,255,0.7)', borderRadius: '3px', pointerEvents: 'none', position: 'absolute', bottom: '-15px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
               {part.name}

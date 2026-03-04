@@ -15,6 +15,7 @@ export interface FritzingPart {
   width: number;
   height: number;
   viewBox: string;
+  anchor: { x: number, y: number };
 }
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "" });
@@ -35,9 +36,6 @@ export const parseFritzingPart = (fzpText: string, svgText: string): FritzingPar
   const vbW = vb[2];
   const vbH = vb[3];
 
-  // --- REFINED DPI DETECTION ---
-  let dpi = 72; // Default for many Fritzing parts (Illustrator base)
-  
   const parseToInches = (dim: string): number | null => {
     const val = parseFloat(dim);
     if (dim.includes('mm')) return val / 25.4;
@@ -47,24 +45,16 @@ export const parseFritzingPart = (fzpText: string, svgText: string): FritzingPar
     return null;
   };
 
+  let dpi = 90;
   const widthInInches = parseToInches(widthAttr);
   if (widthInInches && widthInInches > 0) {
     dpi = vbW / widthInInches;
   } else {
-    // If no explicit physical unit, check if it's likely 72, 90, or 96
-    // Arduino Nano uses 50.4px for 0.7in -> 50.4 / 0.7 = 72 DPI
-    const commonDpis = [72, 90, 96, 100];
-    const detectedDpi = vbW / (parseFloat(widthAttr) / 72); // loop logic? No.
-    
-    // Most Fritzing parts where px == viewBox units are 72 DPI
-    if (Math.abs(parseFloat(widthAttr) - vbW) < 0.1) {
-      dpi = 72; 
-    } else {
-      dpi = 90; // Inkscape default
-    }
+    // Arduino Nano and others: width="50.4px" viewBox="0 0 50.4 ..." => 72 DPI
+    if (Math.abs(parseFloat(widthAttr) - vbW) < 0.1) dpi = 72;
   }
 
-  // Final scale factor to reach our internal 150 DPI (15px = 0.1in)
+  // Target: 1 inch = 150px (15px per 0.1in)
   const scaleFactor = 150 / dpi;
   const width = vbW * scaleFactor;
   const height = vbH * scaleFactor;
@@ -74,8 +64,8 @@ export const parseFritzingPart = (fzpText: string, svgText: string): FritzingPar
   if (fzpConnectors) {
     const connList = Array.isArray(fzpConnectors) ? fzpConnectors : [fzpConnectors];
     connList.forEach((c: any) => {
-      const breadboardView = c.views?.breadboardView?.p;
-      const connP = Array.isArray(breadboardView) ? breadboardView[0] : breadboardView;
+      const bv = c.views?.breadboardView?.p;
+      const connP = Array.isArray(bv) ? bv[0] : bv;
       connectors.push({ id: c.id, svgId: connP?.svgId || `${c.id}pin`, legId: connP?.legId });
     });
   }
@@ -85,9 +75,7 @@ export const parseFritzingPart = (fzpText: string, svgText: string): FritzingPar
   svgEl.setAttribute('preserveAspectRatio', 'xMinYMin meet');
   const svgContent = new XMLSerializer().serializeToString(svgEl);
 
-  console.log(`Loaded ${fzpData.module.title}: WidthAttr=${widthAttr}, vbW=${vbW}, Detected DPI=${dpi}, Scale=${scaleFactor}`);
-
-  return { id: `fzp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, name: fzpData.module.title || 'Part', svgContent, connectors, width, height, viewBox };
+  return { id: `fzp-${Date.now()}`, name: fzpData.module.title || 'Part', svgContent, connectors, width, height, viewBox, anchor: {x:0, y:0} };
 };
 
 export const loadFullPartByFzpPath = async (fzpPath: string): Promise<FritzingPart> => {
