@@ -32,10 +32,10 @@
   flex: 1;
   position: relative;
   overflow: auto;
-  /* Adjust position so the CENTER of the dot is at (0,0), (15,15), etc. */
+  /* Background dots aligned to (0,0) and 15px increments */
   background-image: radial-gradient(#ccc 1.2px, transparent 0);
   background-size: 15px 15px;
-  background-position: -0.6px -0.6px; 
+  background-position: -7.5px -7.5px; /* Shift half-grid to move dot from tile center to corner */
   background-attachment: local;
 }
 
