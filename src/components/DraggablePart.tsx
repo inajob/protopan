@@ -4,14 +4,15 @@ import Draggable from 'react-draggable';
 interface PartProps {
   name: string;
   rotation: number;
-  initialPos?: { x: number; y: number };
+  initialPos: { x: number; y: number };
+  onMove: (x: number, y: number) => void;
   onClick?: () => void;
   isDeleteMode?: boolean;
   isTransparent?: boolean;
   showLabel?: boolean;
 }
 
-const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 60, y: 60 }, onClick, isDeleteMode, isTransparent, showLabel = true }) => {
+const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos, onMove, onClick, isDeleteMode, isTransparent, showLabel = true }) => {
   const nodeRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -22,14 +23,17 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
   return (
     <Draggable 
       nodeRef={nodeRef}
-      defaultPosition={initialPos} 
+      position={initialPos} 
       grid={[15, 15]}
       disabled={isDeleteMode}
       onStart={() => setIsDragging(false)}
       onDrag={() => setIsDragging(true)}
-      onStop={() => { setTimeout(() => setIsDragging(false), 100); }}
+      onStop={(_, data) => {
+        setTimeout(() => setIsDragging(false), 100);
+        onMove(data.x, data.y);
+      }}
     >
-      <div ref={nodeRef} style={{ position: 'absolute', zIndex: 10 }}>
+      <div ref={nodeRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 10 }}>
         <div
           onClick={(e) => {
             e.stopPropagation();
@@ -47,6 +51,7 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
             width: '30px',
             height: '30px',
             opacity: isTransparent ? 0.4 : 1,
+            position: 'relative'
           }}
         >
           {!isDeleteMode && <div className="rotate-indicator">↻</div>}

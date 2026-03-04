@@ -47,11 +47,9 @@ function App() {
     setIsLoading(true);
     try {
       const partData = await loadFullPartByFzpPath(`parts/fritzing-parts/core/${entry.path}`);
-      setParts([...parts, { id: partData.id, type: 'FZP', x: 200, y: 200, rotation: 0, fzpData: partData }]);
-    } catch (err) {
-      alert('Failed to load part.');
-      console.error(err);
-    }
+      // Initial position aligned to grid
+      setParts([...parts, { id: partData.id, type: 'FZP', x: 210, y: 210, rotation: 0, fzpData: partData }]);
+    } catch (err) { alert('Failed to load part.'); }
     setIsLoading(false);
   };
 
@@ -63,6 +61,10 @@ function App() {
         setParts([...parts, { id: partData.id, type: 'FZP', x: 210, y: 210, rotation: 0, fzpData: partData }]);
       } catch (err) { alert('Failed to load .fzpz'); }
     }
+  };
+
+  const updatePartPos = (id: string, x: number, y: number) => {
+    setParts(parts.map(p => p.id === id ? { ...p, x, y } : p));
   };
 
   const deletePart = (id: string) => setParts(parts.filter(p => p.id !== id));
@@ -80,8 +82,7 @@ function App() {
         const y2 = hole.y + BB_Y;
         const dist = Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
         const colorMap: any = { 15:'#8B4513', 30:'#FF0000', 45:'#FFA500', 60:'#FFFF00', 75:'#008000', 90:'#0000FF' };
-        const color = colorMap[Math.round(dist)] || '#333';
-        setWires([...wires, { id: `wire-${Date.now()}`, from: { x: x1, y: y1 }, to: { x: x2, y: y2 }, color }]);
+        setWires([...wires, { id: `wire-${Date.now()}`, from: { x: x1, y: y1 }, to: { x: x2, y: y2 }, color: colorMap[Math.round(dist)] || '#333' }]);
       }
       setSelectedHole(null);
     }
@@ -104,9 +105,7 @@ function App() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px' }}>
           {isLoading && <p style={{ fontSize: '12px' }}>Loading component...</p>}
           {filteredIndex.map(p => (
-            <div key={p.path} onClick={() => addPartFromLib(p)} style={{ padding: '10px 0', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '13px', color: '#333' }}>
-              {p.name}
-            </div>
+            <div key={p.path} onClick={() => addPartFromLib(p)} style={{ padding: '10px 0', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '13px', color: '#333' }}>{p.name}</div>
           ))}
         </div>
       </div>
@@ -118,24 +117,15 @@ function App() {
             <label htmlFor="fzpz-upload" className="tool-button">Import .fzpz</label>
             <input type="file" accept=".fzpz" onChange={handleFileUpload} id="fzpz-upload" style={{ display: 'none' }} />
           </div>
-
           <div className="tool-group">
-            <select 
-              value={bbRows} 
-              onChange={(e) => setBbRows(Number(e.target.value))}
-              style={{ padding: '4px 8px', fontSize: '13px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-            >
-              {BREADBOARD_SIZES.map(s => (
-                <option key={s.rows} value={s.rows}>BB: {s.label}</option>
-              ))}
+            <select value={bbRows} onChange={(e) => setBbRows(Number(e.target.value))} style={{ padding: '4px 8px', fontSize: '13px', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+              {BREADBOARD_SIZES.map(s => ( <option key={s.rows} value={s.rows}>BB: {s.label}</option> ))}
             </select>
           </div>
-
           <div className="tool-group">
             <button onClick={() => setShowLabels(!showLabels)} className={`tool-button ${showLabels ? 'active' : ''}`}>Labels</button>
             <button onClick={() => setIsTransparentMode(!isTransparentMode)} className={`tool-button ${isTransparentMode ? 'active' : ''}`}>X-Ray</button>
           </div>
-
           <div className="tool-group">
             <button onClick={() => setIsDeleteMode(!isDeleteMode)} className={`tool-button danger ${isDeleteMode ? 'active' : ''}`}>Delete</button>
           </div>
@@ -147,16 +137,14 @@ function App() {
               {wires.map(wire => ( <Wire key={wire.id} wire={wire} onClick={() => deleteWire(wire.id)} isDeleteMode={isDeleteMode} /> ))}
             </g>
           </svg>
-
           <div style={{ position: 'absolute', top: `${BB_Y}px`, left: `${BB_X}px` }}>
             <Breadboard rows={bbRows} onHoleClick={handleHoleClick} selectedHoleId={selectedHole?.id} />
           </div>
-
           {parts.map(part => (
             part.type === 'FZP' && part.fzpData ? (
-              <FritzingPartComponent key={part.id} part={part.fzpData} rotation={part.rotation} initialPos={{ x: part.x, y: part.y }} onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} isDeleteMode={isDeleteMode} isTransparent={isTransparentMode} showLabel={showLabels} />
+              <FritzingPartComponent key={part.id} part={part.fzpData} rotation={part.rotation} initialPos={{ x: part.x, y: part.y }} onMove={(x, y) => updatePartPos(part.id, x, y)} onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} isDeleteMode={isDeleteMode} isTransparent={isTransparentMode} showLabel={showLabels} />
             ) : (
-              <DraggablePart key={part.id} name={part.type} rotation={part.rotation} initialPos={{ x: part.x, y: part.y }} onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} isDeleteMode={isDeleteMode} isTransparent={isTransparentMode} showLabel={showLabels} />
+              <DraggablePart key={part.id} name={part.type} rotation={part.rotation} initialPos={{ x: part.x, y: part.y }} onMove={(x, y) => updatePartPos(part.id, x, y)} onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} isDeleteMode={isDeleteMode} isTransparent={isTransparentMode} showLabel={showLabels} />
             )
           ))}
         </div>

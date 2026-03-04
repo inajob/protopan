@@ -52,8 +52,10 @@ const Breadboard: React.FC<BreadboardProps> = ({ rows = 30, onHoleClick, selecte
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
-      <svg width={bbWidth} height={300} style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px', display: 'block' }}>
-        <rect x={10} y={10} width={bbWidth - 20} height={280} rx={10} fill="#f8f8f8" stroke="#ddd" strokeWidth="2" />
+      {/* Removed CSS border to prevent coordinate shifting */}
+      <svg width={bbWidth} height={300} style={{ backgroundColor: 'transparent', display: 'block', overflow: 'visible' }}>
+        {/* Base with stroke as border */}
+        <rect x={0} y={0} width={bbWidth} height={300} rx={10} fill="#f8f8f8" stroke="#ccc" strokeWidth="1" />
         
         {/* Power Rail Lines */}
         <line x1={offsetX-5} y1={offsetY - 8} x2={offsetX+(rows-1)*spacing+5} y2={offsetY - 8} stroke="red" strokeWidth="2" opacity="0.5" />
