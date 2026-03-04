@@ -15,6 +15,12 @@ interface PartInstance {
 
 interface LibEntry { name: string; path: string; }
 
+const BREADBOARD_SIZES = [
+  { label: 'Tiny (17)', rows: 17 },
+  { label: 'Half (30)', rows: 30 },
+  { label: 'Full (63)', rows: 63 }
+];
+
 function App() {
   const [parts, setParts] = useState<PartInstance[]>([]);
   const [wires, setWires] = useState<WireData[]>([]);
@@ -22,6 +28,7 @@ function App() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [isTransparentMode, setIsTransparentMode] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
+  const [bbRows, setBbRows] = useState(30);
   
   const [partIndex, setPartIndex] = useState<LibEntry[]>([]);
   const [search, setSearch] = useState('');
@@ -83,7 +90,6 @@ function App() {
 
   return (
     <div className="editor-container">
-      {/* Sidebar */}
       <div className="sidebar">
         <div style={{ padding: '20px' }}>
           <h3>Library</h3>
@@ -99,47 +105,48 @@ function App() {
               {p.name}
             </div>
           ))}
-          {search.length > 1 && filteredIndex.length === 0 && <p style={{ fontSize: '12px', color: '#999' }}>No results.</p>}
         </div>
       </div>
 
       <div className="main-area">
-        {/* Modern Native Toolbar */}
         <div className="toolbar">
           <div className="tool-group">
             <button onClick={addLed} className="tool-button primary">＋ LED</button>
-            <input type="file" accept=".fzpz" onChange={handleFileUpload} id="fzpz-upload" style={{ display: 'none' }} />
             <label htmlFor="fzpz-upload" className="tool-button">Import .fzpz</label>
+            <input type="file" accept=".fzpz" onChange={handleFileUpload} id="fzpz-upload" style={{ display: 'none' }} />
           </div>
 
           <div className="tool-group">
-            <button onClick={() => setShowLabels(!showLabels)} className={`tool-button ${showLabels ? 'active' : ''}`}>
-              {showLabels ? '● Labels' : '○ Labels'}
-            </button>
-            <button onClick={() => setIsTransparentMode(!isTransparentMode)} className={`tool-button ${isTransparentMode ? 'active' : ''}`}>
-              {isTransparentMode ? '● X-Ray' : '○ X-Ray'}
-            </button>
+            <select 
+              value={bbRows} 
+              onChange={(e) => setBbRows(Number(e.target.value))}
+              style={{ padding: '4px 8px', fontSize: '13px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              {BREADBOARD_SIZES.map(s => (
+                <option key={s.rows} value={s.rows}>BB: {s.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="tool-group">
-            <button onClick={() => setIsDeleteMode(!isDeleteMode)} className={`tool-button danger ${isDeleteMode ? 'active' : ''}`}>
-              {isDeleteMode ? 'Stop Deleting' : 'Delete Mode'}
-            </button>
+            <button onClick={() => setShowLabels(!showLabels)} className={`tool-button ${showLabels ? 'active' : ''}`}>Labels</button>
+            <button onClick={() => setIsTransparentMode(!isTransparentMode)} className={`tool-button ${isTransparentMode ? 'active' : ''}`}>X-Ray</button>
           </div>
 
-          <div style={{ flex: 1 }} />
-          <span style={{ fontSize: '12px', color: '#8e8e93' }}>Breadboard Editor v0.1</span>
+          <div className="tool-group">
+            <button onClick={() => setIsDeleteMode(!isDeleteMode)} className={`tool-button danger ${isDeleteMode ? 'active' : ''}`}>Delete</button>
+          </div>
         </div>
         
         <div className={`canvas ${isDeleteMode ? 'delete-cursor' : ''}`}>
-          <svg style={{ position: 'absolute', top: 0, left: 0, width: '3000px', height: '3000px', pointerEvents: 'none', zIndex: 5 }}>
+          <svg style={{ position: 'absolute', top: 0, left: 0, width: '4000px', height: '2000px', pointerEvents: 'none', zIndex: 5 }}>
             <g style={{ pointerEvents: 'auto' }}>
               {wires.map(wire => ( <Wire key={wire.id} wire={wire} onClick={() => deleteWire(wire.id)} isDeleteMode={isDeleteMode} /> ))}
             </g>
           </svg>
 
           <div style={{ position: 'absolute', top: `${BB_Y}px`, left: `${BB_X}px` }}>
-            <Breadboard onHoleClick={handleHoleClick} selectedHoleId={selectedHole?.id} />
+            <Breadboard rows={bbRows} onHoleClick={handleHoleClick} selectedHoleId={selectedHole?.id} />
           </div>
 
           {parts.map(part => (

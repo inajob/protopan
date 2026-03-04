@@ -7,15 +7,14 @@ export interface HoleInfo {
 }
 
 interface BreadboardProps {
+  rows?: number;
   onHoleClick?: (hole: HoleInfo) => void;
   selectedHoleId?: string | null;
 }
 
-const Breadboard: React.FC<BreadboardProps> = ({ onHoleClick, selectedHoleId }) => {
-  const rows = 30;
+const Breadboard: React.FC<BreadboardProps> = ({ rows = 30, onHoleClick, selectedHoleId }) => {
   const cols = 5;
   const spacing = 15;
-  // Let's make holes exactly on multiples of 15 relative to breadboard origin
   const offsetX = 30; 
   const offsetY = 30;
 
@@ -49,14 +48,19 @@ const Breadboard: React.FC<BreadboardProps> = ({ onHoleClick, selectedHoleId }) 
     holes.push(renderHole(x, offsetY + spacing * 16, `p4-${r}`));
   }
 
+  const bbWidth = (rows - 1) * spacing + offsetX * 2;
+
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
-      <svg width={500} height={300} style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px', display: 'block' }}>
-        <rect x={10} y={10} width={480} height={280} rx={10} fill="#f8f8f8" stroke="#ddd" strokeWidth="2" />
+      <svg width={bbWidth} height={300} style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px', display: 'block' }}>
+        <rect x={10} y={10} width={bbWidth - 20} height={280} rx={10} fill="#f8f8f8" stroke="#ddd" strokeWidth="2" />
+        
+        {/* Power Rail Lines */}
         <line x1={offsetX-5} y1={offsetY - 8} x2={offsetX+(rows-1)*spacing+5} y2={offsetY - 8} stroke="red" strokeWidth="2" opacity="0.5" />
         <line x1={offsetX-5} y1={offsetY + spacing + 8} x2={offsetX+(rows-1)*spacing+5} y2={offsetY + spacing + 8} stroke="blue" strokeWidth="2" opacity="0.5" />
         <line x1={offsetX-5} y1={offsetY + spacing * 15 - 8} x2={offsetX+(rows-1)*spacing+5} y2={offsetY + spacing * 15 - 8} stroke="red" strokeWidth="2" opacity="0.5" />
         <line x1={offsetX-5} y1={offsetY + spacing * 16 + 8} x2={offsetX+(rows-1)*spacing+5} y2={offsetY + spacing * 16 + 8} stroke="blue" strokeWidth="2" opacity="0.5" />
+        
         {holes}
       </svg>
     </div>
