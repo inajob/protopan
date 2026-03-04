@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
 import type { FritzingPart } from '../utils/FritzingPartLoader';
 
@@ -21,8 +21,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
 
   useEffect(() => {
     const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.visibility = 'hidden';
+    container.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;';
     container.style.width = `${part.width}px`;
     container.style.height = `${part.height}px`;
     container.innerHTML = part.svgContent;
@@ -31,7 +30,6 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
     const calibrate = () => {
       const svg = container.querySelector('svg');
       if (!svg) return;
-
       const guides: any[] = [];
       const svgRect = svg.getBoundingClientRect();
       const viewBox = svg.viewBox.baseVal;
@@ -54,8 +52,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
 
       if (guides.length > 0) {
         setPinGuides(guides.map(g => ({ id: g.id, x: g.x, y: g.y })));
-        const first = guides[0];
-        setAnchor({ x: first.pxX, y: first.pxY });
+        setAnchor({ x: guides[0].pxX, y: guides[0].pxY });
         setIsReady(true);
       }
       document.body.removeChild(container);
@@ -79,6 +76,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
             e.stopPropagation();
             if (!isDragging) onClick?.();
           }}
+          className={`part-container ${isDeleteMode ? 'delete-mode' : ''}`}
           style={{
             transform: `translate(${-anchor.x}px, ${-anchor.y}px) rotate(${rotation}deg)`,
             transformOrigin: `${anchor.x}px ${anchor.y}px`,
@@ -90,6 +88,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos = {
             opacity: isTransparent ? 0.4 : 1,
           }}
         >
+          {!isDeleteMode && <div className="rotate-indicator">↻</div>}
           <div dangerouslySetInnerHTML={{ __html: part.svgContent }} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
           <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible', zIndex: 25 }} viewBox={part.viewBox}>
             {pinGuides.map(g => (

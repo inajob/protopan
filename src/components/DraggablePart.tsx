@@ -15,7 +15,6 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
   const nodeRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Define Origin (0,0) at Pin 1
   return (
     <Draggable 
       nodeRef={nodeRef}
@@ -32,11 +31,9 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
             e.stopPropagation();
             if (!isDragging) onClick?.();
           }}
+          className={`part-container ${isDeleteMode ? 'delete-mode' : ''}`}
           style={{
             cursor: isDeleteMode ? 'pointer' : 'grab',
-            border: isDeleteMode ? '2px solid red' : 'none',
-            borderRadius: '4px',
-            padding: '2px',
             transform: `rotate(${rotation}deg)`,
             transformOrigin: `0 0`, 
             transition: 'transform 0.2s ease-in-out, opacity 0.3s ease',
@@ -44,8 +41,10 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
             flexDirection: 'column',
             alignItems: 'center',
             opacity: isTransparent ? 0.4 : 1,
+            position: 'relative'
           }}
         >
+          {!isDeleteMode && <div className="rotate-indicator">↻</div>}
           {name === 'LED' && (
             <svg width={60} height={60} viewBox="-15 -40 60 60" style={{ overflow: 'visible' }}>
               <circle cx={7.5} cy={-25} r={18} fill="rgba(255, 0, 0, 0.7)" stroke="red" strokeWidth="3" />
