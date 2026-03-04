@@ -27,7 +27,6 @@ function App() {
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // CRITICAL: Align breadboard to grid multiples (e.g., 60, 60)
   const BB_X = 60;
   const BB_Y = 60;
 
@@ -65,17 +64,13 @@ function App() {
     if (!selectedHole) setSelectedHole(hole);
     else {
       if (selectedHole.id !== hole.id) {
-        // Wire coordinates are relative to the canvas origin
         const x1 = selectedHole.x + BB_X;
         const y1 = selectedHole.y + BB_Y;
         const x2 = hole.x + BB_X;
         const y2 = hole.y + BB_Y;
-        
-        // Simple color logic by distance
         const dist = Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
         const colorMap: any = { 15:'#8B4513', 30:'#FF0000', 45:'#FFA500', 60:'#FFFF00', 75:'#008000', 90:'#0000FF' };
         const color = colorMap[Math.round(dist)] || '#333';
-
         setWires([...wires, { id: `wire-${Date.now()}`, from: { x: x1, y: y1 }, to: { x: x2, y: y2 }, color }]);
       }
       setSelectedHole(null);
@@ -88,31 +83,52 @@ function App() {
 
   return (
     <div className="editor-container">
+      {/* Sidebar */}
       <div className="sidebar">
-        <div style={{ padding: '15px' }}>
-          <h3 style={{ margin: '0 0 10px 0' }}>Parts Library</h3>
+        <div style={{ padding: '20px' }}>
+          <h3>Library</h3>
           <input 
-            type="text" placeholder="Search..." 
+            type="text" className="sidebar-search" placeholder="Search components..." 
             value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
           />
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 15px' }}>
-          {isLoading && <p>Loading...</p>}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px' }}>
+          {isLoading && <p style={{ fontSize: '12px' }}>Loading component...</p>}
           {filteredIndex.map(p => (
-            <div key={p.path} onClick={() => addPartFromLib(p)} style={{ padding: '8px 0', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '12px' }}>{p.name}</div>
+            <div key={p.path} onClick={() => addPartFromLib(p)} style={{ padding: '10px 0', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '13px', color: '#333' }}>
+              {p.name}
+            </div>
           ))}
+          {search.length > 1 && filteredIndex.length === 0 && <p style={{ fontSize: '12px', color: '#999' }}>No results.</p>}
         </div>
       </div>
 
       <div className="main-area">
+        {/* Modern Native Toolbar */}
         <div className="toolbar">
-          <button onClick={addLed} style={{ padding: '8px 16px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Add LED</button>
-          <input type="file" accept=".fzpz" onChange={handleFileUpload} id="fzpz-upload" style={{ display: 'none' }} />
-          <label htmlFor="fzpz-upload" style={{ padding: '8px 16px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Load .fzpz</label>
-          <button onClick={() => setShowLabels(!showLabels)} style={{ padding: '8px 12px', background: '#00bcd4', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Labels</button>
-          <button onClick={() => setIsTransparentMode(!isTransparentMode)} style={{ padding: '8px 12px', background: isTransparentMode ? '#673ab7' : '#9e9e9e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Trans</button>
-          <button onClick={() => setIsDeleteMode(!isDeleteMode)} style={{ padding: '8px 12px', background: isDeleteMode ? '#f44336' : '#9e9e9e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+          <div className="tool-group">
+            <button onClick={addLed} className="tool-button primary">＋ LED</button>
+            <input type="file" accept=".fzpz" onChange={handleFileUpload} id="fzpz-upload" style={{ display: 'none' }} />
+            <label htmlFor="fzpz-upload" className="tool-button">Import .fzpz</label>
+          </div>
+
+          <div className="tool-group">
+            <button onClick={() => setShowLabels(!showLabels)} className={`tool-button ${showLabels ? 'active' : ''}`}>
+              {showLabels ? '● Labels' : '○ Labels'}
+            </button>
+            <button onClick={() => setIsTransparentMode(!isTransparentMode)} className={`tool-button ${isTransparentMode ? 'active' : ''}`}>
+              {isTransparentMode ? '● X-Ray' : '○ X-Ray'}
+            </button>
+          </div>
+
+          <div className="tool-group">
+            <button onClick={() => setIsDeleteMode(!isDeleteMode)} className={`tool-button danger ${isDeleteMode ? 'active' : ''}`}>
+              {isDeleteMode ? 'Stop Deleting' : 'Delete Mode'}
+            </button>
+          </div>
+
+          <div style={{ flex: 1 }} />
+          <span style={{ fontSize: '12px', color: '#8e8e93' }}>Breadboard Editor v0.1</span>
         </div>
         
         <div className={`canvas ${isDeleteMode ? 'delete-cursor' : ''}`}>
