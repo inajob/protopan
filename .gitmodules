@@ -1,0 +1,3 @@
+[submodule "public/parts/fritzing-parts"]
+	path = public/parts/fritzing-parts
+	url = https://github.com/fritzing/fritzing-parts

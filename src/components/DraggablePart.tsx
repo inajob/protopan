@@ -7,12 +7,15 @@ interface PartProps {
   initialPos?: { x: number; y: number };
   onClick?: () => void;
   isDeleteMode?: boolean;
+  isTransparent?: boolean;
+  showLabel?: boolean;
 }
 
-const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 50, y: 50 }, onClick, isDeleteMode }) => {
+const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 60, y: 60 }, onClick, isDeleteMode, isTransparent, showLabel = true }) => {
   const nodeRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Define Origin (0,0) at Pin 1
   return (
     <Draggable 
       nodeRef={nodeRef}
@@ -21,21 +24,13 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
       disabled={isDeleteMode}
       onStart={() => setIsDragging(false)}
       onDrag={() => setIsDragging(true)}
-      onStop={() => {
-        // Delay resetting isDragging to block the click event that follows mouseup
-        setTimeout(() => setIsDragging(false), 100);
-      }}
+      onStop={() => { setTimeout(() => setIsDragging(false), 100); }}
     >
-      <div 
-        ref={nodeRef}
-        style={{ position: 'absolute', zIndex: 10 }}
-      >
+      <div ref={nodeRef} style={{ position: 'absolute', zIndex: 10 }}>
         <div
           onClick={(e) => {
             e.stopPropagation();
-            if (!isDragging) {
-              onClick?.();
-            }
+            if (!isDragging) onClick?.();
           }}
           style={{
             cursor: isDeleteMode ? 'pointer' : 'grab',
@@ -43,22 +38,28 @@ const DraggablePart: React.FC<PartProps> = ({ name, rotation, initialPos = { x: 
             borderRadius: '4px',
             padding: '2px',
             transform: `rotate(${rotation}deg)`,
-            transition: 'transform 0.2s ease-in-out',
+            transformOrigin: `0 0`, 
+            transition: 'transform 0.2s ease-in-out, opacity 0.3s ease',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center',
+            opacity: isTransparent ? 0.4 : 1,
           }}
         >
           {name === 'LED' && (
-            <svg width={30} height={50} viewBox="0 0 30 50">
-              <circle cx={15} cy={15} r={12} fill="rgba(255, 0, 0, 0.7)" stroke="red" strokeWidth="2" />
-              <line x1={10} y1={25} x2={10} y2={45} stroke="#888" strokeWidth="2" />
-              <line x1={20} y1={25} x2={20} y2={50} stroke="#888" strokeWidth="2" />
+            <svg width={60} height={60} viewBox="-15 -40 60 60" style={{ overflow: 'visible' }}>
+              <circle cx={7.5} cy={-25} r={18} fill="rgba(255, 0, 0, 0.7)" stroke="red" strokeWidth="3" />
+              <circle cx={2.5} cy={-30} r={5} fill="white" opacity="0.3" />
+              <line x1={0} y1={-10} x2={0} y2={5} stroke="#888" strokeWidth="3" />
+              <line x1={15} y1={-10} x2={15} y2={5} stroke="#888" strokeWidth="4" />
+              <circle cx={0} cy={0} r={2.5} fill="#FF3D00" stroke="#FFF" strokeWidth="0.5" />
             </svg>
           )}
-          <div style={{ fontSize: '10px', background: 'rgba(255,255,255,0.7)', borderRadius: '3px', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-            {name}
-          </div>
+          {showLabel && (
+            <div style={{ fontSize: '12px', fontWeight: 'bold', background: 'rgba(255,255,255,0.7)', borderRadius: '3px', pointerEvents: 'none', position: 'absolute', top: '25px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
+              {name}
+            </div>
+          )}
         </div>
       </div>
     </Draggable>

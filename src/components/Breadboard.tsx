@@ -38,22 +38,38 @@ const Breadboard: React.FC<BreadboardProps> = ({ onHoleClick, selectedHoleId }) 
   const holes = [];
   for (let r = 0; r < rows; r++) {
     const x = offsetX + r * spacing;
+    // Top Rails
     holes.push(renderHole(x, offsetY, `p1-${r}`));
     holes.push(renderHole(x, offsetY + spacing, `p2-${r}`));
+    
+    // Main Grid
     for (let c = 0; c < cols; c++) {
       holes.push(renderHole(x, offsetY + spacing * 3 + c * spacing, `g1-${r}-${c}`));
       holes.push(renderHole(x, offsetY + spacing * 9 + c * spacing, `g2-${r}-${c}`));
     }
+    
+    // Bottom Rails
     holes.push(renderHole(x, offsetY + spacing * 15, `p3-${r}`));
     holes.push(renderHole(x, offsetY + spacing * 16, `p4-${r}`));
   }
 
+  const lineStartX = offsetX - 5;
+  const lineEndX = offsetX + (rows - 1) * spacing + 5;
+
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <svg width={500} height={300} style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}>
+        {/* Base */}
         <rect x={10} y={10} width={480} height={280} rx={10} fill="#f8f8f8" stroke="#ddd" strokeWidth="2" />
-        <line x1={offsetX} y1={offsetY - 8} x2={offsetX + (rows-1) * spacing} y2={offsetY - 8} stroke="red" strokeWidth="1.5" opacity="0.5" />
-        <line x1={offsetX} y1={offsetY + spacing * 16 + 8} x2={offsetX + (rows-1) * spacing} y2={offsetY + spacing * 16 + 8} stroke="blue" strokeWidth="1.5" opacity="0.5" />
+        
+        {/* Top Power Rail Lines */}
+        <line x1={lineStartX} y1={offsetY - 8} x2={lineEndX} y2={offsetY - 8} stroke="red" strokeWidth="2" opacity="0.6" />
+        <line x1={lineStartX} y1={offsetY + spacing + 8} x2={lineEndX} y2={offsetY + spacing + 8} stroke="blue" strokeWidth="2" opacity="0.6" />
+
+        {/* Bottom Power Rail Lines */}
+        <line x1={lineStartX} y1={offsetY + spacing * 15 - 8} x2={lineEndX} y2={offsetY + spacing * 15 - 8} stroke="red" strokeWidth="2" opacity="0.6" />
+        <line x1={lineStartX} y1={offsetY + spacing * 16 + 8} x2={lineEndX} y2={offsetY + spacing * 16 + 8} stroke="blue" strokeWidth="2" opacity="0.6" />
+
         {holes}
       </svg>
     </div>
