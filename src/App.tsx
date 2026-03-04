@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import Breadboard from './components/Breadboard';
 import type { HoleInfo } from './components/Breadboard';
-import DraggablePart from './components/DraggablePart';
 import Wire from './components/Wire';
 import type { WireData } from './components/Wire';
 import { loadFzpz, loadFullPartByFzpPath } from './utils/FritzingPartLoader';
@@ -10,7 +9,7 @@ import type { FritzingPart } from './utils/FritzingPartLoader';
 import FritzingPartComponent from './components/FritzingPartComponent';
 
 interface PartInstance {
-  id: string; type: string; x: number; y: number; rotation: number; fzpData?: FritzingPart;
+  id: string; type: string; x: number; y: number; rotation: number; fzpData: FritzingPart;
 }
 
 interface LibEntry { name: string; path: string; }
@@ -41,13 +40,10 @@ function App() {
     fetch('parts-index.json').then(r => r.json()).then(setPartIndex).catch(console.error);
   }, []);
 
-  const addLed = () => setParts([...parts, { id: `led-${Date.now()}`, type: 'LED', x: 150, y: 150, rotation: 0 }]);
-
   const addPartFromLib = async (entry: LibEntry) => {
     setIsLoading(true);
     try {
       const partData = await loadFullPartByFzpPath(`parts/fritzing-parts/core/${entry.path}`);
-      // Initial position aligned to grid
       setParts([...parts, { id: partData.id, type: 'FZP', x: 210, y: 210, rotation: 0, fzpData: partData }]);
     } catch (err) { alert('Failed to load part.'); }
     setIsLoading(false);
@@ -113,7 +109,6 @@ function App() {
       <div className="main-area">
         <div className="toolbar">
           <div className="tool-group">
-            <button onClick={addLed} className="tool-button primary">＋ LED</button>
             <label htmlFor="fzpz-upload" className="tool-button">Import .fzpz</label>
             <input type="file" accept=".fzpz" onChange={handleFileUpload} id="fzpz-upload" style={{ display: 'none' }} />
           </div>
@@ -141,11 +136,17 @@ function App() {
             <Breadboard rows={bbRows} onHoleClick={handleHoleClick} selectedHoleId={selectedHole?.id} />
           </div>
           {parts.map(part => (
-            part.type === 'FZP' && part.fzpData ? (
-              <FritzingPartComponent key={part.id} part={part.fzpData} rotation={part.rotation} initialPos={{ x: part.x, y: part.y }} onMove={(x, y) => updatePartPos(part.id, x, y)} onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} isDeleteMode={isDeleteMode} isTransparent={isTransparentMode} showLabel={showLabels} />
-            ) : (
-              <DraggablePart key={part.id} name={part.type} rotation={part.rotation} initialPos={{ x: part.x, y: part.y }} onMove={(x, y) => updatePartPos(part.id, x, y)} onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} isDeleteMode={isDeleteMode} isTransparent={isTransparentMode} showLabel={showLabels} />
-            )
+            <FritzingPartComponent 
+              key={part.id} 
+              part={part.fzpData} 
+              rotation={part.rotation} 
+              initialPos={{ x: part.x, y: part.y }} 
+              onMove={(x, y) => updatePartPos(part.id, x, y)} 
+              onClick={() => isDeleteMode ? deletePart(part.id) : rotatePart(part.id)} 
+              isDeleteMode={isDeleteMode} 
+              isTransparent={isTransparentMode} 
+              showLabel={showLabels} 
+            />
           ))}
         </div>
       </div>
