@@ -92,7 +92,7 @@ function App() {
     <div className="editor-container">
       <div className="sidebar">
         <div style={{ padding: '20px' }}>
-          <h3>Library</h3>
+          <h1 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: '800', color: '#0071e3', letterSpacing: '-0.5px' }}>Protopan</h1>
           <input 
             type="text" className="sidebar-search" placeholder="Search components..." 
             value={search} onChange={e => setSearch(e.target.value)}
