@@ -83,7 +83,7 @@ export const loadFullPartByFzpPath = async (fzpPath: string): Promise<FritzingPa
   const fzpText = await fzpRes.text();
   const fzpData = parser.parse(fzpText);
   const relativeSvgPath = fzpData.module.views.breadboardView.layers.image;
-  const svgUrl = `/parts/fritzing-parts/svg/core/${relativeSvgPath}`;
+  const svgUrl = `parts/fritzing-parts/svg/core/${relativeSvgPath}`;
   const svgRes = await fetch(svgUrl);
   return parseFritzingPart(fzpText, await svgRes.text());
 };

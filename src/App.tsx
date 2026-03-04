@@ -38,7 +38,7 @@ function App() {
   const BB_Y = 60;
 
   useEffect(() => {
-    fetch('/parts-index.json').then(r => r.json()).then(setPartIndex).catch(console.error);
+    fetch('parts-index.json').then(r => r.json()).then(setPartIndex).catch(console.error);
   }, []);
 
   const addLed = () => setParts([...parts, { id: `led-${Date.now()}`, type: 'LED', x: 150, y: 150, rotation: 0 }]);
@@ -46,9 +46,12 @@ function App() {
   const addPartFromLib = async (entry: LibEntry) => {
     setIsLoading(true);
     try {
-      const partData = await loadFullPartByFzpPath(`/parts/fritzing-parts/core/${entry.path}`);
-      setParts([...parts, { id: partData.id, type: 'FZP', x: 210, y: 210, rotation: 0, fzpData: partData }]);
-    } catch (err) { alert('Failed to load part.'); }
+      const partData = await loadFullPartByFzpPath(`parts/fritzing-parts/core/${entry.path}`);
+      setParts([...parts, { id: partData.id, type: 'FZP', x: 200, y: 200, rotation: 0, fzpData: partData }]);
+    } catch (err) {
+      alert('Failed to load part.');
+      console.error(err);
+    }
     setIsLoading(false);
   };
 
