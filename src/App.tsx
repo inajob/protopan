@@ -4,7 +4,7 @@ import Breadboard from './components/Breadboard';
 import type { HoleInfo } from './components/Breadboard';
 import Wire from './components/Wire';
 import type { WireData } from './components/Wire';
-import { loadFzpz, loadFullPartByFzpPath } from './utils/FritzingPartLoader';
+import { loadFzpz, loadFullPartByFzpPath, loadFullPartByFzpzPath } from './utils/FritzingPartLoader';
 import type { FritzingPart } from './utils/FritzingPartLoader';
 import FritzingPartComponent from './components/FritzingPartComponent';
 
@@ -12,7 +12,7 @@ interface PartInstance {
   id: string; type: string; x: number; y: number; rotation: number; fzpData: FritzingPart;
 }
 
-interface LibEntry { name: string; path: string; }
+interface LibEntry { name: string; path: string; type: 'fzp' | 'fzpz'; }
 
 const BREADBOARD_SIZES = [
   { label: 'Tiny (17)', rows: 17 },
@@ -43,9 +43,17 @@ function App() {
   const addPartFromLib = async (entry: LibEntry) => {
     setIsLoading(true);
     try {
-      const partData = await loadFullPartByFzpPath(`parts/fritzing-parts/core/${entry.path}`);
+      let partData: FritzingPart;
+      if (entry.type === 'fzpz') {
+        partData = await loadFullPartByFzpzPath(entry.path);
+      } else {
+        partData = await loadFullPartByFzpPath(entry.path);
+      }
       setParts([...parts, { id: partData.id, type: 'FZP', x: 210, y: 210, rotation: 0, fzpData: partData }]);
-    } catch (err) { alert('Failed to load part.'); }
+    } catch (err) { 
+      console.error(err);
+      alert('Failed to load part.'); 
+    }
     setIsLoading(false);
   };
 

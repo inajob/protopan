@@ -1,3 +1,6 @@
 [submodule "public/parts/fritzing-parts"]
 	path = public/parts/fritzing-parts
 	url = https://github.com/fritzing/fritzing-parts
+[submodule "public/parts/adafruit-Fritzing-Library"]
+	path = public/parts/adafruit-Fritzing-Library
+	url = https://github.com/adafruit/Fritzing-Library

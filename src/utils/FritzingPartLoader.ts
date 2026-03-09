@@ -83,9 +83,31 @@ export const loadFullPartByFzpPath = async (fzpPath: string): Promise<FritzingPa
   const fzpText = await fzpRes.text();
   const fzpData = parser.parse(fzpText);
   const relativeSvgPath = fzpData.module.views.breadboardView.layers.image;
-  const svgUrl = `parts/fritzing-parts/svg/core/${relativeSvgPath}`;
+  
+  // Determine SVG base path based on FZP path
+  let svgUrl = '';
+  if (fzpPath.includes('fritzing-parts/core')) {
+    svgUrl = `parts/fritzing-parts/svg/core/${relativeSvgPath}`;
+  } else if (fzpPath.includes('fritzing-parts/contrib')) {
+    svgUrl = `parts/fritzing-parts/svg/contrib/${relativeSvgPath}`;
+  } else {
+    // Fallback or other libraries
+    const baseDir = fzpPath.substring(0, fzpPath.lastIndexOf('/core/') + 1) || 'parts/fritzing-parts/';
+    svgUrl = `${baseDir}svg/core/${relativeSvgPath}`;
+  }
+
   const svgRes = await fetch(svgUrl);
   return parseFritzingPart(fzpText, await svgRes.text());
+};
+
+export const loadFullPartByFzpzPath = async (fzpzPath: string): Promise<FritzingPart> => {
+  const res = await fetch(fzpzPath);
+  const blob = await res.blob();
+  const zip = new JSZip();
+  const content = await zip.loadAsync(blob);
+  const fzpFile = Object.keys(content.files).find(n => n.endsWith('.fzp'))!;
+  const svgFile = Object.keys(content.files).find(n => n.includes('breadboard') && n.endsWith('.svg'))!;
+  return parseFritzingPart(await content.files[fzpFile].async('text'), await content.files[svgFile].async('text'));
 };
 
 export const loadFzpz = async (file: File): Promise<FritzingPart> => {
