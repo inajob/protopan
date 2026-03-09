@@ -16,7 +16,9 @@ interface Props {
 const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, onMove, onClick, isDeleteMode, isTransparent, showLabel = true }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [pinGuides, setPinGuides] = useState<Array<{ id: string, x: number, y: number }>>([]);
+  const [isHovered, setIsHovered] = useState(false);
+  const [hoveredPinId, setHoveredPinId] = useState<string | null>(null);
+  const [pinGuides, setPinGuides] = useState<Array<{ id: string, name: string, x: number, y: number }>>([]);
   const [anchor, setAnchor] = useState({ x: 0, y: 0 });
   const [isReady, setIsReady] = useState(false);
 
@@ -47,12 +49,12 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
           const pxY = rect.top + rect.height / 2 - svgRect.top;
           const vx = (pxX / svgRect.width) * vbW + vbX;
           const vy = (pxY / svgRect.height) * vbH + vbY;
-          guides.push({ id: conn.id, x: vx, y: vy, pxX, pxY });
+          guides.push({ id: conn.id, name: conn.name, x: vx, y: vy, pxX, pxY });
         }
       });
 
       if (guides.length > 0) {
-        setPinGuides(guides.map(g => ({ id: g.id, x: g.x, y: g.y })));
+        setPinGuides(guides.map(g => ({ id: g.id, name: g.name, x: g.x, y: g.y })));
         setAnchor({ x: guides[0].pxX, y: guides[0].pxY });
         setIsReady(true);
       }
@@ -64,49 +66,112 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
   return (
     <Draggable 
       nodeRef={nodeRef}
-      // Use absolute coordinate controlled by App.tsx
       position={initialPos} 
       grid={[15, 15]}
       disabled={isDeleteMode}
-      onStart={() => setIsDragging(false)}
-      onDrag={() => setIsDragging(true)}
+      onStart={() => {
+        // Just reset state at start, don't claim it's a drag yet
+        setIsDragging(false);
+      }}
+      onDrag={() => {
+        // Only if mouse actually moves, consider it a drag
+        setIsDragging(true);
+      }}
       onStop={(_, data) => {
-        setTimeout(() => setIsDragging(false), 100);
+        // If it was a drag, stay in 'dragging' state for a moment 
+        // to prevent the 'click' event from triggering a rotation.
+        // If it was just a click, isDragging remains false.
+        if (isDragging) {
+          setTimeout(() => setIsDragging(false), 50);
+        }
         onMove(data.x, data.y);
       }}
     >
-      {/* Outer wrapper MUST be at top:0, left:0 to align Draggable coordinates with Canvas */}
-      <div ref={nodeRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 15, visibility: isReady ? 'visible' : 'hidden' }}>
+      {/* nodeRef is the Draggable origin */}
+      <div 
+        ref={nodeRef} 
+        style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          zIndex: isDragging ? 100 : 15, 
+          visibility: isReady ? 'visible' : 'hidden'
+        }}
+      >
+        {/* Rotator handles the rotation around Pin 1 (0,0 of parent) */}
         <div
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transformOrigin: '0 0',
+            transition: isDragging ? 'none' : 'transform 0.2s ease-in-out',
+            pointerEvents: 'auto'
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           onClick={(e) => {
             e.stopPropagation();
             if (!isDragging) onClick?.();
           }}
-          className={`part-container ${isDeleteMode ? 'delete-mode' : ''}`}
-          style={{
-            // Component is shifted so Pin 1 is at Draggable's (x,y)
-            transform: `translate(${-anchor.x}px, ${-anchor.y}px) rotate(${rotation}deg)`,
-            transformOrigin: `${anchor.x}px ${anchor.y}px`,
-            transition: 'transform 0.2s ease-in-out, opacity 0.3s ease',
-            display: 'block',
-            width: `${part.width}px`,
-            height: `${part.height}px`,
-            position: 'relative',
-            opacity: isTransparent ? 0.4 : 1,
-          }}
+          className={`part-container ${isDeleteMode ? 'delete-mode' : ''} ${isDragging ? 'dragging' : ''}`}
         >
-          {!isDeleteMode && <div className="rotate-indicator">↻</div>}
-          <div dangerouslySetInnerHTML={{ __html: part.svgContent }} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
-          <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible', zIndex: 25 }} viewBox={part.viewBox}>
-            {pinGuides.map(g => (
-              <circle key={g.id} cx={g.x} cy={g.y} r={Math.max(part.width, part.height) / 150} fill="#FF3D00" stroke="white" strokeWidth={Math.max(part.width, part.height) / 600} opacity={0.8} />
-            ))}
-          </svg>
-          {showLabel && (
-            <div style={{ fontSize: '10px', textAlign: 'center', background: 'rgba(255,255,255,0.7)', borderRadius: '3px', pointerEvents: 'none', position: 'absolute', bottom: '-15px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
-              {part.name}
-            </div>
-          )}
+          {/* Content handles the offset so Pin 1 of SVG is at (0,0) */}
+          <div
+            style={{
+              transform: `translate(${-anchor.x}px, ${-anchor.y}px)`,
+              width: `${part.width}px`,
+              height: `${part.height}px`,
+              position: 'relative',
+              opacity: isTransparent ? 0.4 : 1,
+              transition: 'opacity 0.3s ease',
+            }}
+          >
+            {!isDeleteMode && <div className="rotate-indicator">↻</div>}
+            <div dangerouslySetInnerHTML={{ __html: part.svgContent }} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
+            
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible', zIndex: 25 }} viewBox={part.viewBox}>
+              {pinGuides.map(g => (
+                <g 
+                  key={g.id} 
+                  style={{ pointerEvents: 'auto' }}
+                  onMouseEnter={() => setHoveredPinId(g.id)}
+                  onMouseLeave={() => setHoveredPinId(null)}
+                >
+                  <circle cx={g.x} cy={g.y} r={Math.max(part.width, part.height) / 150} fill="#FF3D00" stroke="white" strokeWidth={Math.max(part.width, part.height) / 600} opacity={0.8} />
+                  {showLabel && hoveredPinId === g.id && g.name && (
+                    <g style={{ transform: `rotate(${-rotation}deg)`, transformOrigin: `${g.x}px ${g.y}px` }}>
+                      <text 
+                        x={g.x} 
+                        y={g.y - Math.max(part.width, part.height) / 50} 
+                        fontSize={Math.max(part.width, part.height) / 40} 
+                        fill="#333" 
+                        textAnchor="middle" 
+                        style={{ paintOrder: 'stroke', stroke: 'white', strokeWidth: 2, fontWeight: 'bold' }}
+                      >
+                        {g.name}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              ))}
+            </svg>
+            
+            {showLabel && (
+              <div style={{ 
+                fontSize: '10px', 
+                textAlign: 'center', 
+                background: 'rgba(255,255,255,0.7)', 
+                borderRadius: '3px', 
+                pointerEvents: 'none', 
+                position: 'absolute', 
+                bottom: '-15px', 
+                left: '50%', 
+                transform: `translateX(-50%) rotate(${-rotation}deg)`, // Keep part label upright
+                whiteSpace: 'nowrap' 
+              }}>
+                {part.name}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Draggable>

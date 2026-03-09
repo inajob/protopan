@@ -3,6 +3,7 @@ import { XMLParser } from 'fast-xml-parser';
 
 export interface FritzingConnector {
   id: string;
+  name: string;
   svgId: string;
   legId?: string;
 }
@@ -66,7 +67,12 @@ export const parseFritzingPart = (fzpText: string, svgText: string): FritzingPar
     connList.forEach((c: any) => {
       const bv = c.views?.breadboardView?.p;
       const connP = Array.isArray(bv) ? bv[0] : bv;
-      connectors.push({ id: c.id, svgId: connP?.svgId || `${c.id}pin`, legId: connP?.legId });
+      connectors.push({ 
+        id: c.id, 
+        name: c.name || '',
+        svgId: connP?.svgId || `${c.id}pin`, 
+        legId: connP?.legId 
+      });
     });
   }
 
