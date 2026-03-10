@@ -49,7 +49,8 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
           const pxY = rect.top + rect.height / 2 - svgRect.top;
           const vx = (pxX / svgRect.width) * vbW + vbX;
           const vy = (pxY / svgRect.height) * vbH + vbY;
-          guides.push({ id: conn.id, name: conn.name, x: vx, y: vy, pxX, pxY });
+          // Use rounded pixel coordinates for anchor to prevent sub-pixel drift
+          guides.push({ id: conn.id, name: conn.name, x: vx, y: vy, pxX: Math.round(pxX), pxY: Math.round(pxY) });
         }
       });
 
@@ -66,28 +67,23 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
   return (
     <Draggable 
       nodeRef={nodeRef}
-      position={initialPos} 
+      position={{ x: Math.round(initialPos.x), y: Math.round(initialPos.y) }} 
       grid={[15, 15]}
       disabled={isDeleteMode}
       onStart={() => {
-        // Just reset state at start, don't claim it's a drag yet
         setIsDragging(false);
       }}
       onDrag={() => {
-        // Only if mouse actually moves, consider it a drag
         setIsDragging(true);
       }}
       onStop={(_, data) => {
-        // If it was a drag, stay in 'dragging' state for a moment 
-        // to prevent the 'click' event from triggering a rotation.
-        // If it was just a click, isDragging remains false.
         if (isDragging) {
           setTimeout(() => setIsDragging(false), 50);
         }
-        onMove(data.x, data.y);
+        // Round to nearest 15 to ensure grid alignment
+        onMove(Math.round(data.x / 15) * 15, Math.round(data.y / 15) * 15);
       }}
     >
-      {/* nodeRef is the Draggable origin */}
       <div 
         ref={nodeRef} 
         style={{ 
@@ -98,20 +94,15 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
           visibility: isReady ? 'visible' : 'hidden'
         }}
       >
-        {/* Rotator handles the rotation around Pin 1 (0,0 of parent) */}
         <div
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onClick={(e) => {
-            // Always stop propagation during delete mode to prioritize deletion over wiring
             if (isDeleteMode) {
               e.stopPropagation();
               onClick?.();
               return;
             }
-            
-            // If we were dragging, don't let this click bubble to the canvas
-            // which would trigger a jumper wire start/end.
             if (isDragging) {
               e.stopPropagation();
             }
@@ -119,12 +110,11 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
           className={`part-container ${isDeleteMode ? 'delete-mode' : ''} ${isDragging ? 'dragging' : ''}`}
           style={{
             transform: `rotate(${rotation}deg)`,
-            transformOrigin: '0 0',
+            transformOrigin: `${anchor.x}px ${anchor.y}px`, // Use explicit anchor point
             transition: isDragging ? 'none' : 'transform 0.2s ease-in-out',
             pointerEvents: 'auto'
           }}
         >
-          {/* Content handles the offset so Pin 1 of SVG is at (0,0) */}
           <div
             style={{
               transform: `translate(${-anchor.x}px, ${-anchor.y}px)`,
@@ -136,17 +126,17 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
             }}
           >
             {!isDeleteMode && (
-            <div 
-              className="rotate-indicator" 
-              style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isDragging) onClick?.();
-              }}
-            >
-              ↻
-            </div>
-          )}
+              <div 
+                className="rotate-indicator" 
+                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isDragging) onClick?.();
+                }}
+              >
+                ↻
+              </div>
+            )}
             <div dangerouslySetInnerHTML={{ __html: part.svgContent }} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
             
             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible', zIndex: 25 }} viewBox={part.viewBox}>
@@ -186,7 +176,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
                 position: 'absolute', 
                 bottom: '-15px', 
                 left: '50%', 
-                transform: `translateX(-50%) rotate(${-rotation}deg)`, // Keep part label upright
+                transform: `translateX(-50%) rotate(${-rotation}deg)`,
                 whiteSpace: 'nowrap' 
               }}>
                 {part.name}

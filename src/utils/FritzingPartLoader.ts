@@ -57,8 +57,8 @@ export const parseFritzingPart = (fzpText: string, svgText: string): FritzingPar
 
   // Target: 1 inch = 150px (15px per 0.1in)
   const scaleFactor = 150 / dpi;
-  const width = vbW * scaleFactor;
-  const height = vbH * scaleFactor;
+  const width = Math.round(vbW * scaleFactor);
+  const height = Math.round(vbH * scaleFactor);
 
   const connectors: FritzingConnector[] = [];
   const fzpConnectors = fzpData.module.connectors?.connector;
