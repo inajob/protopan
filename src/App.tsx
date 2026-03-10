@@ -152,8 +152,12 @@ function App() {
         
         <div className={`canvas ${isDeleteMode ? 'delete-cursor' : ''}`} onClick={handleCanvasClick}>
           <svg style={{ position: 'absolute', top: 0, left: 0, width: '4000px', height: '2000px', pointerEvents: 'none', zIndex: 200 }}>
-            <g style={{ pointerEvents: 'auto' }}>
+            {/* Group for wires: only enable events if we're deleting, otherwise let them be visual only so hovers pass through */}
+            <g style={{ pointerEvents: isDeleteMode ? 'auto' : 'none' }}>
               {wires.map(wire => ( <Wire key={wire.id} wire={wire} onClick={() => deleteWire(wire.id)} isDeleteMode={isDeleteMode} /> ))}
+            </g>
+            {/* Selected point indicator should never block events */}
+            <g style={{ pointerEvents: 'none' }}>
               {selectedPoint && (
                 <circle cx={selectedPoint.x} cy={selectedPoint.y} r={5} fill="#FF9800" opacity={0.6} />
               )}

@@ -103,6 +103,13 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onClick={(e) => {
+            // Always stop propagation during delete mode to prioritize deletion over wiring
+            if (isDeleteMode) {
+              e.stopPropagation();
+              onClick?.();
+              return;
+            }
+            
             // If we were dragging, don't let this click bubble to the canvas
             // which would trigger a jumper wire start/end.
             if (isDragging) {
