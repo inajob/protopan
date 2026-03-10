@@ -23,7 +23,7 @@ const BREADBOARD_SIZES = [
 function App() {
   const [parts, setParts] = useState<PartInstance[]>([]);
   const [wires, setWires] = useState<WireData[]>([]);
-  const [selectedHole, setSelectedHole] = useState<HoleInfo | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<{ x: number, y: number } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [isTransparentMode, setIsTransparentMode] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
@@ -75,21 +75,34 @@ function App() {
   const rotatePart = (id: string) => setParts(parts.map(p => p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p));
   const deleteWire = (id: string) => setWires(wires.filter(w => w.id !== id));
 
-  const handleHoleClick = (hole: HoleInfo) => {
+  const handlePointClick = (absX: number, absY: number) => {
     if (isDeleteMode) return;
-    if (!selectedHole) setSelectedHole(hole);
-    else {
-      if (selectedHole.id !== hole.id) {
-        const x1 = selectedHole.x + BB_X;
-        const y1 = selectedHole.y + BB_Y;
-        const x2 = hole.x + BB_X;
-        const y2 = hole.y + BB_Y;
+    if (!selectedPoint) {
+      setSelectedPoint({ x: absX, y: absY });
+    } else {
+      if (selectedPoint.x !== absX || selectedPoint.y !== absY) {
+        const x1 = selectedPoint.x;
+        const y1 = selectedPoint.y;
+        const x2 = absX;
+        const y2 = absY;
         const dist = Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
         const colorMap: any = { 15:'#8B4513', 30:'#FF0000', 45:'#FFA500', 60:'#FFFF00', 75:'#008000', 90:'#0000FF' };
         setWires([...wires, { id: `wire-${Date.now()}`, from: { x: x1, y: y1 }, to: { x: x2, y: y2 }, color: colorMap[Math.round(dist)] || '#333' }]);
       }
-      setSelectedHole(null);
+      setSelectedPoint(null);
     }
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (isDeleteMode) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Use scrollLeft/Top to get absolute coordinates within the scrollable area
+    const x = e.clientX - rect.left + e.currentTarget.scrollLeft;
+    const y = e.clientY - rect.top + e.currentTarget.scrollTop;
+    const absX = Math.round(x / 15) * 15;
+    const absY = Math.round(y / 15) * 15;
+    handlePointClick(absX, absY);
   };
 
   const filteredIndex = search.length > 1 
@@ -137,14 +150,17 @@ function App() {
           </div>
         </div>
         
-        <div className={`canvas ${isDeleteMode ? 'delete-cursor' : ''}`}>
-          <svg style={{ position: 'absolute', top: 0, left: 0, width: '4000px', height: '2000px', pointerEvents: 'none', zIndex: 5 }}>
+        <div className={`canvas ${isDeleteMode ? 'delete-cursor' : ''}`} onClick={handleCanvasClick}>
+          <svg style={{ position: 'absolute', top: 0, left: 0, width: '4000px', height: '2000px', pointerEvents: 'none', zIndex: 200 }}>
             <g style={{ pointerEvents: 'auto' }}>
               {wires.map(wire => ( <Wire key={wire.id} wire={wire} onClick={() => deleteWire(wire.id)} isDeleteMode={isDeleteMode} /> ))}
+              {selectedPoint && (
+                <circle cx={selectedPoint.x} cy={selectedPoint.y} r={5} fill="#FF9800" opacity={0.6} />
+              )}
             </g>
           </svg>
           <div style={{ position: 'absolute', top: `${BB_Y}px`, left: `${BB_X}px` }}>
-            <Breadboard rows={bbRows} onHoleClick={handleHoleClick} selectedHoleId={selectedHole?.id} />
+            <Breadboard rows={bbRows} onHoleClick={(h) => handlePointClick(h.x + BB_X, h.y + BB_Y)} selectedHoleId={null} />
           </div>
           {parts.map(part => (
             <FritzingPartComponent 

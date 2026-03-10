@@ -21,17 +21,19 @@ const Breadboard: React.FC<BreadboardProps> = ({ rows = 30, onHoleClick, selecte
   const renderHole = (cx: number, cy: number, id: string) => {
     const isSelected = selectedHoleId === id;
     return (
-      <circle
-        key={id}
-        cx={cx}
-        cy={cy}
-        r={isSelected ? 5 : 3}
-        fill={isSelected ? "#FF9800" : "#444"}
-        stroke={isSelected ? "#E65100" : "#222"}
-        strokeWidth={isSelected ? 2 : 0.5}
-        style={{ cursor: 'pointer' }}
-        onClick={() => onHoleClick?.({ id, x: cx, y: cy })}
-      />
+      <g key={id} onClick={() => onHoleClick?.({ id, x: cx, y: cy })} style={{ cursor: 'pointer' }}>
+        {/* Invisible larger hit area */}
+        <circle cx={cx} cy={cy} r={8} fill="transparent" />
+        {/* Visible hole */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={isSelected ? 5 : 3}
+          fill={isSelected ? "#FF9800" : "#444"}
+          stroke={isSelected ? "#E65100" : "#222"}
+          strokeWidth={isSelected ? 2 : 0.5}
+        />
+      </g>
     );
   };
 

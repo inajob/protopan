@@ -100,19 +100,22 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
       >
         {/* Rotator handles the rotation around Pin 1 (0,0 of parent) */}
         <div
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onClick={(e) => {
+            // If we were dragging, don't let this click bubble to the canvas
+            // which would trigger a jumper wire start/end.
+            if (isDragging) {
+              e.stopPropagation();
+            }
+          }}
+          className={`part-container ${isDeleteMode ? 'delete-mode' : ''} ${isDragging ? 'dragging' : ''}`}
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: '0 0',
             transition: isDragging ? 'none' : 'transform 0.2s ease-in-out',
             pointerEvents: 'auto'
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!isDragging) onClick?.();
-          }}
-          className={`part-container ${isDeleteMode ? 'delete-mode' : ''} ${isDragging ? 'dragging' : ''}`}
         >
           {/* Content handles the offset so Pin 1 of SVG is at (0,0) */}
           <div
@@ -125,7 +128,18 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
               transition: 'opacity 0.3s ease',
             }}
           >
-            {!isDeleteMode && <div className="rotate-indicator">↻</div>}
+            {!isDeleteMode && (
+            <div 
+              className="rotate-indicator" 
+              style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isDragging) onClick?.();
+              }}
+            >
+              ↻
+            </div>
+          )}
             <div dangerouslySetInnerHTML={{ __html: part.svgContent }} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
             
             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible', zIndex: 25 }} viewBox={part.viewBox}>
