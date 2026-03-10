@@ -39,6 +39,15 @@
   background-attachment: local;
 }
 
+.canvas.delete-cursor {
+  cursor: crosshair;
+}
+
+.canvas.crosshair-cursor {
+  cursor: crosshair;
+}
+
+
 /* Part Styling: Minimal, No border to interfere with coords */
 .part-container {
   position: relative;

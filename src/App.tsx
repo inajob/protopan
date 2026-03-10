@@ -7,6 +7,8 @@ import type { WireData } from './components/Wire';
 import { loadFzpz, loadFullPartByFzpPath, loadFullPartByFzpzPath } from './utils/FritzingPartLoader';
 import type { FritzingPart } from './utils/FritzingPartLoader';
 import FritzingPartComponent from './components/FritzingPartComponent';
+import TextLabel from './components/TextLabel';
+import type { TextLabelData } from './components/TextLabel';
 
 interface PartInstance {
   id: string; type: string; x: number; y: number; rotation: number; fzpData: FritzingPart;
@@ -23,8 +25,10 @@ const BREADBOARD_SIZES = [
 function App() {
   const [parts, setParts] = useState<PartInstance[]>([]);
   const [wires, setWires] = useState<WireData[]>([]);
+  const [labels, setLabels] = useState<TextLabelData[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<{ x: number, y: number } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [isLabelMode, setIsLabelMode] = useState(false);
   const [isTransparentMode, setIsTransparentMode] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
   const [bbRows, setBbRows] = useState(30);
@@ -75,8 +79,23 @@ function App() {
   const rotatePart = (id: string) => setParts(parts.map(p => p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p));
   const deleteWire = (id: string) => setWires(wires.filter(w => w.id !== id));
 
+  const updateLabelPos = (id: string, x: number, y: number) => {
+    setLabels(labels.map(l => l.id === id ? { ...l, x, y } : l));
+  };
+  const updateLabelText = (id: string, text: string) => {
+    setLabels(labels.map(l => l.id === id ? { ...l, text } : l));
+  };
+  const deleteLabel = (id: string) => setLabels(labels.filter(l => l.id !== id));
+
   const handlePointClick = (absX: number, absY: number) => {
     if (isDeleteMode) return;
+
+    if (isLabelMode) {
+      setLabels([...labels, { id: `label-${Date.now()}`, x: absX, y: absY, text: 'Label' }]);
+      setIsLabelMode(false);
+      return;
+    }
+
     if (!selectedPoint) {
       setSelectedPoint({ x: absX, y: absY });
     } else {
@@ -146,11 +165,12 @@ function App() {
             <button onClick={() => setIsTransparentMode(!isTransparentMode)} className={`tool-button ${isTransparentMode ? 'active' : ''}`}>X-Ray</button>
           </div>
           <div className="tool-group">
-            <button onClick={() => setIsDeleteMode(!isDeleteMode)} className={`tool-button danger ${isDeleteMode ? 'active' : ''}`}>Delete</button>
+            <button onClick={() => { setIsLabelMode(!isLabelMode); setIsDeleteMode(false); }} className={`tool-button ${isLabelMode ? 'active' : ''}`}>Label</button>
+            <button onClick={() => { setIsDeleteMode(!isDeleteMode); setIsLabelMode(false); }} className={`tool-button danger ${isDeleteMode ? 'active' : ''}`}>Delete</button>
           </div>
         </div>
         
-        <div className={`canvas ${isDeleteMode ? 'delete-cursor' : ''}`} onClick={handleCanvasClick}>
+        <div className={`canvas ${isDeleteMode ? 'delete-cursor' : (isLabelMode ? 'crosshair-cursor' : '')}`} onClick={handleCanvasClick}>
           <svg style={{ position: 'absolute', top: 0, left: 0, width: '4000px', height: '2000px', pointerEvents: 'none', zIndex: 200 }}>
             {/* Group for wires: only enable events if we're deleting, otherwise let them be visual only so hovers pass through */}
             <g style={{ pointerEvents: isDeleteMode ? 'auto' : 'none' }}>
@@ -177,6 +197,16 @@ function App() {
               isDeleteMode={isDeleteMode} 
               isTransparent={isTransparentMode} 
               showLabel={showLabels} 
+            />
+          ))}
+          {labels.map(label => (
+            <TextLabel 
+              key={label.id} 
+              label={label} 
+              onMove={(x, y) => updateLabelPos(label.id, x, y)} 
+              onUpdate={(text) => updateLabelText(label.id, text)} 
+              onDelete={() => deleteLabel(label.id)}
+              isDeleteMode={isDeleteMode} 
             />
           ))}
         </div>
