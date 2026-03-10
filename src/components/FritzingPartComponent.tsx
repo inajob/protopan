@@ -16,7 +16,6 @@ interface Props {
 const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, onMove, onClick, isDeleteMode, isTransparent, showLabel = true }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [hoveredPinId, setHoveredPinId] = useState<string | null>(null);
   const [pinGuides, setPinGuides] = useState<Array<{ id: string, name: string, x: number, y: number }>>([]);
   const [anchor, setAnchor] = useState({ x: 0, y: 0 });
@@ -95,8 +94,6 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
         }}
       >
         <div
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
           onClick={(e) => {
             if (isDeleteMode) {
               e.stopPropagation();

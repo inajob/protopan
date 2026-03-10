@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import Breadboard from './components/Breadboard';
-import type { HoleInfo } from './components/Breadboard';
 import Wire from './components/Wire';
 import type { WireData } from './components/Wire';
 import { loadFzpz, loadFullPartByFzpPath, loadFullPartByFzpzPath } from './utils/FritzingPartLoader';
