@@ -148,7 +148,7 @@ const FritzingPartComponent: React.FC<Props> = ({ part, rotation, initialPos, on
                   onMouseLeave={() => setHoveredPinId(null)}
                 >
                   <circle cx={g.x} cy={g.y} r={Math.max(part.width, part.height) / 150} fill="#FF3D00" stroke="white" strokeWidth={Math.max(part.width, part.height) / 600} opacity={0.8} />
-                  {showLabel && hoveredPinId === g.id && g.name && (
+                  {hoveredPinId === g.id && g.name && (
                     <g style={{ transform: `rotate(${-rotation}deg)`, transformOrigin: `${g.x}px ${g.y}px` }}>
                       <text 
                         x={g.x} 
